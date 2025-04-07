@@ -1,0 +1,38 @@
+name: "cc-backend-dev"
+
+services:
+  cc-mssql-dev:
+    build: ./mssql
+    container_name: cc-mssql-dev
+    ports:
+      - "4000:1433"
+    environment:
+      TZ: UTC
+      MSSQL_SA_PASSWORD: Admin@123
+      ACCEPT_EULA: Y
+    volumes:
+      - ./mssql/scripts:/docker-entrypoint-initdb.d
+    command: >
+      bash -c "
+        /opt/mssql/bin/sqlservr &
+        sleep 15s
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Admin@123 -d master -i /docker-entrypoint-initdb.d/init.sql
+        tail -f /dev/null
+      "
+
+  cc-mongo-dev:
+    container_name: cc-mongo-dev
+    image: mongo
+    shm_size: 128mb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: Admin123
+    ports:
+      - "4001:27017"
+
+  cc-redis-dev:
+    image: redis:alpine
+    container_name: cc-redis-dev
+    ports:
+      - "4002:6379"
+    command: redis-server --appendonly yes --requirepass Admin123
