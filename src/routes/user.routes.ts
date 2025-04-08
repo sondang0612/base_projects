@@ -4,10 +4,13 @@ import { authController } from "../controllers/auth.controller";
 import { protect } from "../middlewares/protect";
 import { restrictTo } from "../middlewares/restrict-to";
 import { userController } from "../controllers/user.controller";
+import { validateDto } from "../middlewares/validate-dto";
+import { LoginDto } from "../dtos/auth/login.dto";
+import { SignUpDto } from "../dtos/auth/sign-up.dto";
 
 const router = express.Router();
-router.post("/login", authController.login);
-router.post("/signup", authController.signup);
+router.post("/login", validateDto(LoginDto), authController.login);
+router.post("/signup", validateDto(SignUpDto), authController.signup);
 router.post("/logout", protect, authController.logout);
 
 router.get(

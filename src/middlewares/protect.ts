@@ -18,9 +18,8 @@ const protect = catchAsync(
     }
 
     if (!token) {
-      throw new AppError(
-        "You are not logged in! Please log in to get access.",
-        401
+      return next(
+        new AppError("You are not logged in! Please log in to get access.", 401)
       );
     }
 

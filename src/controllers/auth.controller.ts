@@ -30,10 +30,6 @@ const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { userName, password } = req.body;
 
-    if (!userName || !password) {
-      return next(new AppError("Please provide email and password", 400));
-    }
-
     const user = await userService._findOne({ where: { userName } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -68,10 +64,7 @@ const login = catchAsync(
  */
 const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { userName, password, fullName, role } = req.body;
-    if (!userName || !password || !fullName) {
-      return next(new AppError("Please provide information", 400));
-    }
+    const { password, role } = req.body;
 
     const newUser = await userService._create({
       ...req.body,
