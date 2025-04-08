@@ -7,8 +7,12 @@ import userRouter from "./src/routes/user.routes";
 import { swaggerSpec } from "./src/utils/swagger";
 import swaggerUI from "swagger-ui-express";
 import globalErrorHandler from "./src/handlers/global-error.handler";
+import helmet from "helmet";
 
 const app = express();
+
+// set security http headers
+app.use(helmet());
 
 app.use(cors());
 app.use(express.json());
