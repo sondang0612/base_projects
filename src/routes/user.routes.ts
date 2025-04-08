@@ -8,7 +8,7 @@ import { userController } from "../controllers/user.controller";
 const router = express.Router();
 router.post("/login", authController.login);
 router.post("/signup", authController.signup);
-router.post("/logout", authController.logout);
+router.post("/logout", protect, authController.logout);
 
 router.get(
   "/info",

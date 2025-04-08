@@ -3,9 +3,11 @@ import { Response } from "express";
 import { User } from "../entities/mssql/user.entity";
 import redisService from "../services/redis.service";
 import { signToken } from "../utils/signToken";
+import { v4 as uuidv4 } from "uuid";
 
 const createSendToken = (user: User, statusCode: number, res: Response) => {
-  const token = signToken(user.id);
+  const jid = uuidv4();
+  const token = signToken(user.id, jid);
 
   const cookieOptions = {
     expires: new Date(
@@ -19,7 +21,7 @@ const createSendToken = (user: User, statusCode: number, res: Response) => {
 
   res.cookie("jwt", token, cookieOptions);
 
-  redisService.set(`session:${user.id}`, token);
+  redisService.set(`user_jid:${user.id}`, `${jid}`);
 
   res.status(statusCode).json({
     status: "success",

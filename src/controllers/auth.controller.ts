@@ -96,7 +96,7 @@ const signup = catchAsync(
  * The session key associated with the user's ID is deleted from the Redis store, effectively logging the user out.
  */
 const logout = catchAsync(async (req: Request, res: Response) => {
-  redisService.remove(`session:${req?.user?.id}`);
+  redisService.remove(`user_jid:${req.user?.id}`);
 
   return res.send({ message: "Logout successfully!" });
 });

@@ -28,7 +28,7 @@ const protect = catchAsync(
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || ""
-    ) as jwt.JwtPayload;
+    ) as jwt.JwtPayload & { jid: string };
 
     // check if user still exists
     const freshUser = await userService._findOne({ where: { id: decoded.id } });
@@ -39,9 +39,9 @@ const protect = catchAsync(
     }
 
     // token check
-    const existingSession = await redisService.get(`session:${freshUser?.id}`);
+    const existingJid = await redisService.get(`user_jid:${freshUser.id}`);
 
-    if (!existingSession || existingSession !== token) {
+    if (!existingJid || existingJid !== decoded.jid) {
       return next(
         new AppError(
           "Token is invalid or has been revoked. Please log in again.",
