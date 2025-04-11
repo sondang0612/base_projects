@@ -6,6 +6,7 @@ import { AppError } from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
 import { createSendToken } from "../utils/createSendToken";
 import { ERole } from "../constants/role.enum";
+import { sendResponse } from "../utils/sendResponse";
 
 /**
  * @api {post} /api/v1/users/login User Login
@@ -111,7 +112,7 @@ const logout = catchAsync(async (req: Request, res: Response) => {
  * It returns the user's information if the user is authenticated.
  */
 const info = catchAsync(async (req: Request, res: Response) => {
-  return res.send({ message: "User details", data: { user: req?.user } });
+  return sendResponse(res, { user: req.user });
 });
 
 const authController = { login, signup, logout, info };

@@ -1,5 +1,6 @@
 import path from "path";
 import { DataSource } from "typeorm";
+import { initMockData } from "../data/initMockData";
 
 class MssqlService {
   private static dataSource: DataSource;
@@ -18,7 +19,7 @@ class MssqlService {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_DATABASE,
         entities: [path.join(__dirname, "../entities/mssql/*.entity.{ts,js}")],
-        synchronize: false,
+        synchronize: true,
         logging: false,
         options: {
           trustServerCertificate: true,
@@ -28,6 +29,7 @@ class MssqlService {
       });
 
       await this.dataSource.initialize();
+      await initMockData();
       console.log("[MSSQL] Connected successfully");
       return this.dataSource;
     } catch (error) {

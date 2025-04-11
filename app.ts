@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 import { AppError } from "./src/utils/appError";
 import userRouter from "./src/routes/user.routes";
+import devaRouter from "./src/routes/deva.routes";
 import { swaggerSpec } from "./src/utils/swagger";
 import swaggerUI from "swagger-ui-express";
 import globalErrorHandler from "./src/handlers/global-error.handler";
@@ -42,6 +43,7 @@ app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Routes
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/deva", devaRouter);
 
 app.all(/(.*)/, (req, _, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
