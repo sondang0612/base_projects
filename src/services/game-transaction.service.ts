@@ -1,126 +1,46 @@
 import { EDefaultEmail } from "../constants/default-email.enum";
-import { EGameTransactionType } from "../constants/game-transaction-type.enum";
 import { GameTransactionDto } from "../dtos/deva/game-transaction.dto";
-import { GameTransactionEntity } from "../entities/mssql/game-transaction.entity";
-import { User } from "../entities/mssql/user.entity";
+import { UpdateUserBalanceAndCreateTransactionParamters } from "../database/parameters/deva";
 import { MssqlService } from "./mssql.service";
 import TypeOrmBaseService from "./typeorm-base.service";
+import { GameTransactionEntity } from "../database/entities/mssql/game-transaction.entity";
+import { UserEntity } from "../database/entities/mssql/user.entity";
 
 class GameTransactionsService extends TypeOrmBaseService<GameTransactionEntity> {
-  async create(args: GameTransactionDto, user: User) {
-    const { uuid, type, amount, referenceUuid } = args;
-    const existingTx = await gameTransactionsService._findOne({
-      where: { uuid },
-    });
-    if (existingTx) {
-      return {
-        result: { balance: user?.balance },
-        status: "AlreadyProcessed",
-      };
-    }
-
-    let updatedBalance = user.balance;
-    let realAmount = amount;
-
-    switch (type) {
-      case EGameTransactionType.BET: {
-        if (amount > user.balance) {
-          return {
-            result: { balance: user?.balance },
-            status: "InsufficientPlayerBalance",
-          };
-        }
-        updatedBalance -= amount;
-        break;
-      }
-
-      case EGameTransactionType.WIN: {
-        updatedBalance += amount;
-        break;
-      }
-
-      case EGameTransactionType.CANCEL_BET: {
-        const refTx = await gameTransactionsService._findOne({
-          where: { uuid: referenceUuid, type: EGameTransactionType.BET },
-        });
-        if (!refTx) {
-          return {
-            result: { balance: user?.balance },
-            status: "ReferenceNotFound",
-          };
-        }
-        realAmount = amount ?? refTx.amount;
-        updatedBalance += realAmount;
-        break;
-      }
-
-      case EGameTransactionType.CANCEL_WIN: {
-        const refTx = await gameTransactionsService._findOne({
-          where: { uuid: referenceUuid, type: EGameTransactionType.WIN },
-        });
-        if (!refTx) {
-          return {
-            result: { balance: user?.balance },
-            status: "ReferenceNotFound",
-          };
-        }
-        realAmount = amount ?? refTx.amount;
-        if (realAmount > user.balance) {
-          return {
-            result: { balance: user?.balance },
-            status: "InsufficientPlayerBalance",
-          };
-        }
-        updatedBalance -= realAmount;
-        break;
-      }
-
-      case EGameTransactionType.OTHER: {
-        if (amount < 0 && user.balance + amount < 0) {
-          return {
-            result: { balance: user?.balance },
-            status: "InsufficientPlayerBalance",
-          };
-        }
-        updatedBalance += amount;
-        break;
-      }
-
-      default:
-        return {
-          result: { balance: user?.balance },
-          status: "UnhandledTransactionType",
-        };
-    }
-
-    const queryRunner = MssqlService.getDataSource().createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      await queryRunner.manager.getRepository(User).update(user.id, {
-        balance: updatedBalance,
-      });
-
-      await queryRunner.manager.getRepository(GameTransactionEntity).save({
-        ...args,
-        createdBy: EDefaultEmail.DEVA_GENERATED,
-      } as any);
-
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      console.log(err);
-      return {
-        result: { balance: user?.balance },
-        status: "TransactionFailed",
-      };
-    } finally {
-      await queryRunner.release();
-    }
+  async create(args: GameTransactionDto, user: UserEntity) {
+    const result =
+      await MssqlService.executeProcedure<UpdateUserBalanceAndCreateTransactionParamters>(
+        "UpdateUserBalanceAndCreateTransaction",
+        {
+          PlayerCode: args.playerCode,
+          Uuid: args.uuid,
+          ProviderCode: args.providerCode,
+          GameCode: args.gameCode,
+          GameName: args.gameName,
+          GameNameEn: args.gameName_en,
+          GameCategory: args.gameCategory,
+          RoundId: args.roundId,
+          Type: args.type,
+          Amount: args.amount,
+          ReferenceUuid: args.referenceUuid,
+          RoundStarted: args.roundStarted ? 1 : 0,
+          RoundFinished: args.roundFinished ? 1 : 0,
+          Details: args.details,
+          CreatedBy: EDefaultEmail.DEVA_GENERATED,
+        },
+        [
+          { name: "Status", type: "NVARCHAR(50)", asName: "status" },
+          {
+            name: "UpdatedBalance",
+            type: "DECIMAL(16, 4)",
+            asName: "updateBalance",
+          },
+        ]
+      );
 
     return {
-      result: { balance: updatedBalance },
-      status: "OK",
+      result: { balance: result?.updateBalance || user.balance },
+      status: result?.status || "OK",
     };
   }
 }

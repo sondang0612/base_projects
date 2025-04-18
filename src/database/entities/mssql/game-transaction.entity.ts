@@ -6,10 +6,10 @@ import {
   ManyToOne,
   UpdateDateColumn,
 } from "typeorm";
-import { EGameTransactionType } from "../../constants/game-transaction-type.enum";
 import { BaseEntity } from "./base.entity";
-import { User } from "./user.entity";
-import { ETableName } from "../../constants/table-name.enum";
+import { UserEntity } from "./user.entity";
+import { EGameTransactionType } from "../../../constants/game-transaction-type.enum";
+import { ETableName } from "../../../constants/table-name.enum";
 
 @Entity(ETableName.GAME_TRANSACTIONS)
 export class GameTransactionEntity extends BaseEntity {
@@ -64,7 +64,7 @@ export class GameTransactionEntity extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.gameTransactions)
+  @ManyToOne(() => UserEntity, (user) => user.gameTransactions)
   @JoinColumn({ name: "playerCode", referencedColumnName: "playerCode" })
-  user: User;
+  user: UserEntity;
 }

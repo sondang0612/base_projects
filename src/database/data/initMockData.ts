@@ -1,8 +1,8 @@
-import { ERole } from "../constants/role.enum";
-import { User } from "../entities/mssql/user.entity";
-import userService from "../services/user.service";
+import { ERole } from "../../constants/role.enum";
+import userService from "../../services/user.service";
+import { UserEntity } from "../entities/mssql/user.entity";
 
-const users: Partial<User>[] = [
+const users: Partial<UserEntity>[] = [
   {
     userName: "admin",
     fullName: "Administrator",
@@ -19,7 +19,7 @@ const users: Partial<User>[] = [
     role: ERole.USER,
     isDeleted: false,
     playerCode: "test1",
-    balance: 0,
+    balance: 10000,
   },
   {
     userName: "user2",
@@ -28,7 +28,7 @@ const users: Partial<User>[] = [
     role: ERole.USER,
     isDeleted: false,
     playerCode: "test2",
-    balance: 0,
+    balance: 10000,
   },
 ];
 

@@ -1,11 +1,15 @@
 import { instanceToInstance } from "class-transformer";
 import { Response } from "express";
-import { User } from "../entities/mssql/user.entity";
 import redisService from "../services/redis.service";
 import { signToken } from "../utils/signToken";
 import { v4 as uuidv4 } from "uuid";
+import { UserEntity } from "../database/entities/mssql/user.entity";
 
-const createSendToken = (user: User, statusCode: number, res: Response) => {
+const createSendToken = (
+  user: UserEntity,
+  statusCode: number,
+  res: Response
+) => {
   const jid = uuidv4();
   const token = signToken(user.id, jid);
 

@@ -1,6 +1,7 @@
 import path from "path";
 import { DataSource } from "typeorm";
-import { initMockData } from "../data/initMockData";
+import { initMockData } from "../database/data/initMockData";
+import dataSource from "../database/data-source";
 
 class MssqlService {
   private static dataSource: DataSource;
@@ -11,22 +12,7 @@ class MssqlService {
         return this.dataSource;
       }
 
-      this.dataSource = new DataSource({
-        type: "mssql",
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_DATABASE,
-        entities: [path.join(__dirname, "../entities/mssql/*.entity.{ts,js}")],
-        synchronize: true,
-        logging: false,
-        options: {
-          trustServerCertificate: true,
-          connectTimeout: 30000,
-          cancelTimeout: 30000,
-        },
-      });
+      this.dataSource = dataSource;
 
       await this.dataSource.initialize();
       await initMockData();
@@ -52,6 +38,46 @@ class MssqlService {
       await this.dataSource.destroy();
       console.log("Database connection closed.");
     }
+  }
+
+  public static async executeProcedure<T extends Object>(
+    procedureName: string,
+    parameters: T,
+    outputParameters: { name: string; type: string; asName?: string }[] = []
+  ) {
+    const dataSource = this.getDataSource();
+
+    const paramKeys = Object.keys(parameters);
+    const paramPlaceholders = paramKeys.map((_, idx) => `@${idx}`).join(", ");
+    const paramValues = Object.values(parameters);
+
+    const outputDeclarations = outputParameters
+      .map((param) => `DECLARE @${param.name} ${param.type};`)
+      .join("\n      ");
+
+    const outputPlaceholders = outputParameters
+      .map((param) => `@${param.name} OUTPUT`)
+      .join(", ");
+
+    const outputSelects = outputParameters
+      .map((param) => `@${param.name} AS ${param.asName || param.name}`)
+      .join(", ");
+
+    const sql = `
+        ${outputDeclarations}
+        EXEC ${procedureName} ${paramPlaceholders}${
+      outputParameters.length > 0 ? ", " + outputPlaceholders : ""
+    };
+        SELECT ${outputSelects.length > 0 ? outputSelects : "1 as result"};
+    `;
+
+    const result = await dataSource.query(sql, paramValues);
+
+    if (result?.length > 0) {
+      return result[0];
+    }
+
+    return {};
   }
 }
 

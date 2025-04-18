@@ -7,10 +7,10 @@ import {
   Repository,
   SaveOptions,
 } from "typeorm";
-import { BaseEntity } from "../entities/mssql/base.entity";
 import { EDefaultEmail } from "../constants/default-email.enum";
 import { MssqlService } from "./mssql.service";
 import { AppError } from "../utils/appError";
+import { BaseEntity } from "../database/entities/mssql/base.entity";
 
 type CreateEntityOpts = Partial<{
   userEmail?: string;
